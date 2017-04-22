@@ -30,7 +30,7 @@ type SherlockDate struct {
 }
 
 // Parse takes a string representing some English phrase, and
-// returns an Event struct.
+// returns a time.Time struct.
 func (p *Parser) Parse(input string) SherlockDate {
 	// tokenize the string
 	var rangeSplit = regexp.MustCompile(rangeSplitters)
