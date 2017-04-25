@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
-)
 
-const rangeSplitters = `(\bto\b|\-|\b(?:un)?till?\b|\bthrough\b|\bthru\b|\band\b|\bends?\b)`
+	"github.com/aaronarduino/gosherlock/patterns"
+)
 
 type Parser struct {
 	Config
@@ -33,7 +33,7 @@ type SherlockDate struct {
 // returns a time.Time struct.
 func (p *Parser) Parse(input string) SherlockDate {
 	// tokenize the string
-	var rangeSplit = regexp.MustCompile(rangeSplitters)
+	var rangeSplit = regexp.MustCompile(patterns.RangeSplitters)
 	date := SherlockDate{}
 
 	date.Tokens = rangeSplit.Split(strings.ToLower(input), -1)

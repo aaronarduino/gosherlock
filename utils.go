@@ -1,6 +1,11 @@
 package gosherlock
 
-import "time"
+import (
+	"regexp"
+	"time"
+
+	"github.com/aaronarduino/gosherlock/patterns"
+)
 
 func MonthDiff(d1, d2 time.Time) int {
 	months := (d2.Year() - d1.Year()) * 12
@@ -13,7 +18,8 @@ func MonthDiff(d1, d2 time.Time) int {
 }
 
 func EscapeRegExp(str string) string {
-	return ""
+	tmp := regexp.MustCompile(patterns.EscapeRegex)
+	return tmp.ReplaceAllLiteralString(str, `\$&`)
 }
 
 func IsSameDay(date1, date2 time.Time) bool {
