@@ -22,6 +22,7 @@ type ReturnedDate struct {
 	EventTitle string
 	StartDate  time.Time
 	EndDate    time.Time
+	HasYear    bool
 }
 
 type SherlockDate struct {
@@ -45,6 +46,10 @@ func (p *Parser) Parse(input string) SherlockDate {
 // parser is the main date parsing func
 func (p *Parser) Parser(str, time, startTime string) {
 	//
+}
+
+func (p *Parser) SetNow(ct time.Time) {
+	p.nowDate = ct
 }
 
 func (p *Parser) GetNow() time.Time {

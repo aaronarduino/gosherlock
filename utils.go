@@ -7,50 +7,105 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aaronarduino/gosherlock/helpers"
 	"github.com/aaronarduino/gosherlock/patterns"
 )
 
-var (
-	monthToInt = map[string]int{"jan": 0, "feb": 1, "mar": 2, "apr": 3, "may": 4, "jun": 5, "jul": 6, "aug": 7, "sep": 8, "oct": 9, "nov": 10, "dec": 11}
+func RelativeDateMatcher(match string, rtnTime *ReturnedDate) bool {
+	switch match {
+	case "next week":
+		rtnTime.StartDate.AddDate(0, 0, 7)
+	case "next month":
+		rtnTime.StartDate.AddDate(0, 1, 0)
+	case "next year":
+		rtnTime.StartDate.AddDate(1, 0, 0)
+	case "last week":
+		rtnTime.StartDate.AddDate(0, 0, -7)
+	case "last month":
+		rtnTime.StartDate.AddDate(0, -1, 0)
+	case "last year":
+		rtnTime.StartDate.AddDate(-1, 0, 0)
+	case "tom":
+	case "tmrw":
+	case "tomorrow":
+		rtnTime.StartDate.AddDate(0, 0, 1)
+	case "day after tom":
+	case "day after tmrw":
+	case "day after tomorrow":
+		rtnTime.StartDate.AddDate(0, 0, 2)
+	case "this week":
+	case "this month":
+	case "this year": // this week|month|year is pretty meaningless, but let's include it so that it parses as today
+	case "tod":
+	case "today":
+		rtnTime.StartDate.AddDate(0, 0, 0)
+	case "now":
+	case "right now":
+	case "tonight":
+		rtnTime.StartDate.AddDate(0, 0, 0)
+		// TODO: add case for tonight
+	case "yest":
+	case "yesterday":
+		rtnTime.StartDate.AddDate(0, 0, -1)
+	case "day before yest":
+	case "day before yesterday":
+		rtnTime.StartDate.AddDate(0, 0, -2)
+	default:
+		return false
+	}
+	rtnTime.HasYear = true
+	return true
+}
 
-	// mapping of words to numbers
-	wordsToInt = map[string]int{
-		"one":     1,
-		"first":   1,
-		"two":     2,
-		"second":  2,
-		"three":   3,
-		"third":   3,
-		"four":    4,
-		"fourth":  4,
-		"five":    5,
-		"fifth":   5,
-		"six":     6,
-		"sixth":   6,
-		"seven":   7,
-		"seventh": 7,
-		"eight":   8,
-		"eighth":  8,
-		"nine":    9,
-		"ninth":   9,
-		"ten":     10,
-		"tenth":   10,
+func InRelativeDateMatcher(num string, scale string, ago bool, rtnTime *ReturnedDate) bool {
+	var number int
+
+	// This may be a bad idea, but hey,
+	// don't knock it till you try it, right?
+	// This should match 'a' or 'an' or else parse number
+	if num == "a" || num == "an" {
+		number = 1
+	} else {
+		// in error-case, number should be zero and
+		// number's null value is zero so err can be ignored
+		number, _ := strconv.Atoi(num)
 	}
 
-	// mapping of number to words
-	intToWords = []string{
-		"one|first",
-		"two|second",
-		"three|third",
-		"four|fourth",
-		"five|fifth",
-		"six|sixth",
-		"seven|seventh",
-		"eight|eighth",
-		"nine|ninth",
-		"ten|tenth",
+	if ago {
+		number = number * -1
 	}
-)
+
+	switch scale {
+	case "day":
+		rtnTime.StartDate.AddDate(0, 0, number)
+	case "week":
+		rtnTime.StartDate.AddDate(0, 0, number*7)
+	case "month":
+		rtnTime.StartDate.AddDate(0, number, 0)
+	case "year":
+		rtnTime.StartDate.AddDate(number, 0, 0)
+	default:
+		return false
+	}
+	rtnTime.HasYear = true
+	return true
+}
+
+func ChangeMonth(month string) int {
+	return helpers.MonthToInt[month[0:3]]
+}
+
+func ChangeDay(inTime *time.Time, newDay int, hasNext string) {
+	var diff = 7 - inTime.Day() + newDay
+	if (diff > 7 && hasNext == "") || hasNext == "last" {
+		diff -= 7
+	} else if diff >= 0 && hasNext == "last" {
+		diff -= 7
+	} else if hasNext == "oxt" {
+		diff += 7
+	}
+	*inTime.AddDate(0, 0, diff)
+}
 
 func MonthDiff(d1, d2 time.Time) int {
 	months := (d2.Year() - d1.Year()) * 12
@@ -76,7 +131,7 @@ func IsSameDay(date1, date2 time.Time) bool {
 func StrToNum(str string) string {
 	tmp := regexp.MustCompile(``)
 	return tmp.ReplaceAllStringFunc(str, func(val string) string {
-		var out = strconv.Itoa(wordsToInt[val])
+		var out = strconv.Itoa(helpers.WordsToInt[val])
 		if strings.Index(val[len(val)-2:], "th") != -1 {
 			out += "th"
 		} else if strings.Index(val[len(val)-2:], "st") != -1 {
